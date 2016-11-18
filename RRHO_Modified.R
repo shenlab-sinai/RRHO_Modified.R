@@ -1,4 +1,4 @@
-generate.rrho<-function(pval.data,logfc.data,list,outdir){
+generate.rrho<-function(pval.data,logfc.data,list,outdir,BY=FALSE){
   
   max.scale<-list()  
   
@@ -18,7 +18,7 @@ generate.rrho<-function(pval.data,logfc.data,list,outdir){
     list1<-cbind(rownames(pval.data),-1*log10(pval.data[,as.character(list[j,1])])*sign(logfc.data[,as.character(list[j,1])]))
     list2<-cbind(rownames(pval.data),-1*log10(pval.data[,as.character(list[j,2])])*sign(logfc.data[,as.character(list[j,2])]))
     
-    rrho.mod(list1,list2,maximum=max(unlist(max.scale)),labels=c(as.character(list[j,1]),as.character(list[j,2])),outputdir=outdir)
+    rrho.mod(list1,list2,maximum=max(unlist(max.scale)),labels=c(as.character(list[j,1]),as.character(list[j,2])),outputdir=outdir,BY=BY)
   }
   
 }
@@ -58,8 +58,8 @@ rrho.max<-function (list1, list2, stepsize = defaultftepSize(list1, list2))
     stop("Non-unique gene identifier found in list2")
  result <- list(hypermat = NA, hypermat.counts = NA, n.items = nrow(list1), 
                  stepsize = stepsize, hypermat.by = NA, call = match.call())
-  list1 <- list1[order(list1[, 2], decreasing = TRUE), ]
-  list2 <- list2[order(list2[, 2], decreasing = TRUE), ]
+  list1 <- list1[order(as.numeric(list1[, 2]), decreasing = TRUE), ]
+  list2 <- list2[order(as.numeric(list2[, 2]), decreasing = TRUE), ]
   nlist1 <- length(list1[, 1])
   nlist2 <- length(list2[, 1])
   N <- max(nlist1, nlist2)
@@ -83,8 +83,8 @@ rrho.mod<-function (list1, list2, stepsize = defaultftepSize(list1, list2), maxi
     stop("When plots=TRUE, outputdir and labels are required.")
   result <- list(hypermat = NA, hypermat.counts = NA, n.items = nrow(list1), 
                  stepsize = stepsize, hypermat.by = NA, call = match.call())
-  list1 <- list1[order(list1[, 2], decreasing = TRUE), ]
-  list2 <- list2[order(list2[, 2], decreasing = TRUE), ]
+  list1 <- list1[order(as.numeric(list1[, 2]), decreasing = TRUE), ]
+  list2 <- list2[order(as.numeric(list2[, 2]), decreasing = TRUE), ]
   nlist1 <- length(list1[, 1])
   nlist2 <- length(list2[, 1])
   N <- max(nlist1, nlist2)
