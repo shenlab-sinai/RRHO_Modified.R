@@ -4,7 +4,7 @@
 
 
 # Main function to call
-generate.rrho<-function(pval.data,logfc.data,list,outdir,BY=TRUE){ 
+generate.rrho<-function(pval.data,logfc.data,list,outdir,BY=TRUE,scale.maximum=NULL){ 
 
   # pval.data: A data frame, col1 has gene ID; subsequent cols = p-values in each expt
   # logfc.data: A data frame, col1 has gene ID; subsequent cols = logfc in each expt
@@ -25,7 +25,7 @@ generate.rrho<-function(pval.data,logfc.data,list,outdir,BY=TRUE){
     # list 2 = data.frame from expt 2 with two cols, col 1 has Gene ID 
     # and col 2 has signed ranking value (e.g. signed -log10(p-value))
 
-    max.scale<-append(max.scale,rrho.mod(list1,list2,maximum=0,labels=c(as.character(list[i,1]),as.character(list[i,2])),outputdir=outdir,BY=BY)) #
+    max.scale<-append(max.scale,rrho.mod(list1,list2,maximum=0,labels=c(as.character(list[i,1]),as.character(list[i,2])), plots = FALSE, outputdir=outdir,BY=BY))
     
   }
   
@@ -36,7 +36,13 @@ generate.rrho<-function(pval.data,logfc.data,list,outdir,BY=TRUE){
     list1<-cbind(rownames(pval.data),-1*log10(pval.data[,as.character(list[j,1])])*sign(logfc.data[,as.character(list[j,1])]))
     list2<-cbind(rownames(pval.data),-1*log10(pval.data[,as.character(list[j,2])])*sign(logfc.data[,as.character(list[j,2])]))
     
-    rrho.mod(list1,list2,maximum = max(unlist(max.scale)), labels=c(as.character(list[j,1]),as.character(list[j,2])),outputdir=outdir,BY=BY)
+    maximum.max.scale = max(unlist(max.scale))
+    
+    if (!is.null(scale.maximum)) {
+      maximum.max.scale = scale.maximum
+    }
+      
+    rrho.mod(list1,list2,maximum = maximum.max.scale, labels=c(as.character(list[j,1]),as.character(list[j,2])),outputdir=outdir,BY=BY)
     
   }
 }
@@ -118,9 +124,9 @@ rrho.mod<-function (list1, list2, stepsize = defaultftepSize(list1, list2), maxi
                           ncol = ncol(hypermat))
     
     
-    hypermat.by.new = hypermat.by #
-    hypermat.by.new[is.infinite(hypermat.by.new)] = 0 #
-    hypermat.by[is.infinite(hypermat.by)] = max(hypermat.by.new, na.rm = TRUE) #
+    hypermat.by.new = hypermat.by 
+    hypermat.by.new[is.infinite(hypermat.by.new)] = 0 
+    hypermat.by[is.infinite(hypermat.by)] = max(hypermat.by.new, na.rm = TRUE) 
     
     result$hypermat.by <- hypermat.by
     
@@ -153,11 +159,11 @@ rrho.mod<-function (list1, list2, stepsize = defaultftepSize(list1, list2), maxi
     layout(matrix(c(rep(1, 5), 2), 1, 6, byrow = TRUE))
     
     
-    image(hypermat, xlab = "", ylab = "", col = jet.colors(100), # was image(hypermat)
+    image(hypermat, xlab = "", ylab = "", col = jet.colors(100), 
           axes = FALSE, main = "Rank Rank Hypergeometric Overlap Map",zlim=c(0,maximum));
     
-    lines(c((list1signchange/nlist1),(list1signchange/nlist1)),c(0,1),col="white",lty=2) #
-    lines(c(0,1),c((list2signchange/nlist2),(list2signchange/nlist2)),col="white",lty=2) #
+    lines(c((list1signchange/nlist1),(list1signchange/nlist1)),c(0,1),col="white",lty=2) 
+    lines(c(0,1),c((list2signchange/nlist2),(list2signchange/nlist2)),col="white",lty=2) 
     
     mtext(labels[2], 2, 0.5)
     mtext(labels[1], 1, 0.5)
