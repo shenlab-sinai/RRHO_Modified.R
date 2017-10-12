@@ -4,9 +4,9 @@
 # Facilitates generation of multiple RRHOs
 
 GenerateRrho <- function(pval.data, logfc.data, list,outdir, 
-                         BY = TRUE, scale.maximum = NULL) { 
-	# Main function
-	#
+                         BY = TRUE, scale.maximum = NULL) {
+    # Main function
+    #
     # Args:
     #
     # 	pval.data: Data frame; col1 is gene ID, 
@@ -68,8 +68,8 @@ GenerateRrho <- function(pval.data, logfc.data, list,outdir,
 ###########RRHO Dependency functions###############################
 
 DefaultStepSize <- function(list1, list2) {
-	# Obtains step size (no. of genes to increase 
-	# by in each iteration of algorithm)
+    # Obtains step size (no. of genes to increase 
+    # by in each iteration of algorithm)
     n1 <- dim(list1)[1]
     n2 <- dim(list2)[1]
     result <- ceiling(min(sqrt(c(n1,n2))))  
@@ -78,8 +78,8 @@ DefaultStepSize <- function(list1, list2) {
 
 
 NumericListOverlap <- function(sample1, sample2, stepsize) {
-	# Computes counts and p-values of RRHO Matrix
-	# Args: 
+    # Computes counts and p-values of RRHO Matrix
+    # Args: 
     # 	sample1: genes in ordered list1
     # 	sample2: genes in ordered list2
     
@@ -99,6 +99,7 @@ NumericListOverlap <- function(sample1, sample2, stepsize) {
   
     indexes <- expand.grid(i = seq(1,n,by = stepsize), 
                            j = seq(1,n,by = stepsize)) 
+	
     # creates matrix where each cell represents i and j genes
     overlaps <- apply(indexes, 1, function(x) overlap(x['i'],x['j'])) 
     # calculates values of counts and -log10(p-value) for each cell of matrix
@@ -115,7 +116,7 @@ NumericListOverlap <- function(sample1, sample2, stepsize) {
 
 RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2), 
                      maximum, labels, plots = TRUE, outputdir , BY = FALSE) {
-	# Error handling
+    # Error handling
     if (length(list1[, 1]) !=  length(unique(list1[, 1])))
     stop("Non-unique gene identifier found in list1")
     if (length(list2[, 1]) !=  length(unique(list2[, 1])))
