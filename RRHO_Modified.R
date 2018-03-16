@@ -9,18 +9,18 @@ GenerateRrho <- function(pval.data, logfc.data, list,outdir,
     #
     # Args:
     #
-    # 	pval.data: Data frame; col1 is gene ID, 
-    #			   subsequent cols are p-values in each expt
-    # 	logfc.data: Data frame; col1 is gene ID, 
-    #				subsequent cols=logfc in each expt
-    # 	list: A matrix, col1 has name of expt 1, 
+    #   pval.data: Data frame; col1 is gene ID, 
+    #        subsequent cols are p-values in each expt
+    #   logfc.data: Data frame; col1 is gene ID, 
+    #       subsequent cols=logfc in each expt
+    #   list: A matrix, col1 has name of expt 1, 
     #         col2 has name of expt 2
-    # 	outdir: name of output directory
-    # 	BY: Benjamini-Yekutieli multiple hypothesis correction
-    
+    #   outdir: name of output directory
+    #   BY: Benjamini-Yekutieli multiple hypothesis correction
+
     max.scale <- list()
     
-    for (i in 1:nrow(list)) {
+    for (i in 1:nrow(list)) { # To calculate scale max
     
     list1 <- cbind(rownames(pval.data), 
                    -1*log10(pval.data[,as.character(list[i,1])]) * 
@@ -28,7 +28,10 @@ GenerateRrho <- function(pval.data, logfc.data, list,outdir,
     list2 <- cbind(rownames(pval.data), 
                    -1*log10(pval.data[,as.character(list[i,2])]) * 
                     sign(logfc.data[,as.character(list[i,2])]))
-    
+    list3 <- cbind(rownames(pval.data), 
+                   -1*log10(pval.data[,as.character(list[i,2])]) * 
+                   -1 * sign(logfc.data[,as.character(list[i,2])]))
+ 
     # list 1 is data frame from expt 1 with two cols, col 1 has Gene ID 
     # and col 2 has signed ranking value (e.g. signed -log10(p-value))
     # list 2 is data.frame from expt 2 with two cols, col 1 has Gene ID 
@@ -38,31 +41,79 @@ GenerateRrho <- function(pval.data, logfc.data, list,outdir,
                         labels = c(as.character(list[i,1]), 
                         as.character(list[i,2])), 
                         plots = FALSE, outputdir = outdir, 
-                        BY = BY))
+                        BY = BY, plotsonly = FALSE))
+
+    max.scale <- append(max.scale, RrhoMod(list1,list3, maximum = 0, 
+                        labels = c(as.character(list[i,1]), 
+                        as.character(list[i,2])), 
+                        plots = FALSE, outputdir = outdir, 
+                        BY = BY, plotsonly = FALSE)) 
+
+              # you need by correction to get the max of the heatmap
     }
     
-    # Creates RRHO map using max(max.scale) for each expt pair
-    for (j in 1:nrow(list)) {
+
+    for (j in 1:nrow(list)) { # to generate RRHO
     
     list1 <- cbind(rownames(pval.data), 
                    -1*log10(pval.data[,as.character(list[j,1])]) * 
                    sign(logfc.data[,as.character(list[j,1])]))
     list2 <- cbind(rownames(pval.data), 
                    -1*log10(pval.data[,as.character(list[j,2])]) * 
-                   sign(logfc.data[,as.character(list[j,2])]))
-    
+                   sign(logfc.data[,as.character(list[j,2])])) 
+
+    list3 <- cbind(rownames(pval.data), 
+                   -1*log10(pval.data[,as.character(list[j,2])]) * 
+                   -1 * sign(logfc.data[,as.character(list[j,2])])) 
+
     maximum.max.scale <- max(unlist(max.scale))
     
+    if (maximum.max.scale == 0) {
+      maximum.max.scale <- 10.0
+    }
+
+
     if (!is.null(scale.maximum)) {
       maximum.max.scale <- scale.maximum
     }
       
     RrhoMod(list1, list2, maximum = maximum.max.scale, 
             labels = c(as.character(list[j,1]), 
-            as.character(list[j,2])), 
+            paste0(as.character(list[j,2]), "", "")), 
             outputdir = outdir, 
-            BY = BY)
-    } 
+            BY = BY, scale.maximum = scale.maximum, plotsonly = FALSE)
+    corval1 <- corval
+
+
+    RrhoMod(list1, list3, maximum = maximum.max.scale, 
+            labels = c(as.character(list[j,1]), 
+            paste0(as.character(list[j,2]), "_", "2")),
+            outputdir = outdir, 
+            BY = BY, scale.maximum = scale.maximum, plotsonly = FALSE)
+    corval2 <- corval
+
+    if(corval1 > corval2) {
+      unlink(paste(outdir,"*_2.jpg", sep = "/"))
+      unlink(paste(outdir,"*_2.csv", sep = "/"))
+
+    } else {
+
+      hypermat <<- final_hypermat[,c(ncol(final_hypermat):1)]
+      
+      RrhoMod(list1, list3, maximum = maximum.max.scale, 
+        labels = c(as.character(list[j,1]), 
+        paste0(as.character(list[j,2]), "_", "2")),
+        outputdir = outdir, 
+        BY = BY, scale.maximum = scale.maximum, plotsonly = TRUE)
+
+        unlink(paste(outdir,"RankScatter*_2.jpg", sep = "/"))
+        unlink(paste(outdir,"RRHO_GO_Most*regulated*_2.csv", sep = "/"))
+        unlink(paste(outdir,"RRHO_Venn*_2.jpg", sep = "/"))
+        unlink(paste0(outdir, "/RRHOMap", as.character(list[j,1]), "_VS_", as.character(list[j,2]), ".jpg")) 
+    }
+
+    }
+
 }
 
 ###########RRHO Dependency functions###############################
@@ -80,8 +131,8 @@ DefaultStepSize <- function(list1, list2) {
 NumericListOverlap <- function(sample1, sample2, stepsize) {
     # Computes counts and p-values of RRHO Matrix
     # Args: 
-    # 	sample1: genes in ordered list1
-    # 	sample2: genes in ordered list2
+    #   sample1: genes in ordered list1
+    #   sample2: genes in ordered list2
     
     n <- length(sample1)
     
@@ -94,12 +145,12 @@ NumericListOverlap <- function(sample1, sample2, stepsize) {
                         log.p = TRUE) 
     # performs hypergeometric test for subset of genes in list1 and list2
     return(c(counts = count, log.pval = log.pval)) 
-	}
+  }
   
   
     indexes <- expand.grid(i = seq(1,n,by = stepsize), 
                            j = seq(1,n,by = stepsize)) 
-	
+  
     # creates matrix where each cell represents i and j genes
     overlaps <- apply(indexes, 1, function(x) overlap(x['i'],x['j'])) 
     # calculates values of counts and -log10(p-value) for each cell of matrix
@@ -115,8 +166,10 @@ NumericListOverlap <- function(sample1, sample2, stepsize) {
 
 
 RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2), 
-                     maximum, labels, plots = TRUE, outputdir , BY = FALSE) {
+                     maximum, labels, plots = TRUE, outputdir , BY = FALSE, 
+                     scale.maximum = NULL, plotsonly = FALSE) {
     # Error handling
+    if (plotsonly == FALSE) {
     if (length(list1[, 1]) !=  length(unique(list1[, 1])))
     stop("Non-unique gene identifier found in list1")
     if (length(list2[, 1]) !=  length(unique(list2[, 1])))
@@ -131,9 +184,6 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
     # rearrange rows acc to decreasing order of signed -log10(p-value)
     list2 <- list2[order(as.numeric(list2[, 2]), decreasing = TRUE), ] 
     # rearrange rows acc to decreasing order of signed -log10(p-value)
-    
-    list1signchange <- (grep("^-",as.character(list1[,2])))[1]
-    list2signchange <- (grep("^-",as.character(list2[,2])))[1]
     
     nlist1 <- length(list1[, 1])
     nlist2 <- length(list2[, 1])
@@ -161,16 +211,52 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
     
     hypermat.by.new = hypermat.by 
     hypermat.by.new[is.infinite(hypermat.by.new)] = 0 
-    hypermat.by[is.infinite(hypermat.by)] = max(hypermat.by.new, na.rm = TRUE) 
+
+    # if scale.maximum provided by user, replace infinity with that value.
+    # Otherwise, replace infinity with maximum of the matrix (other than infinity)
+
+    if (!is.null(scale.maximum)) {
+
+      hypermat.by[is.infinite(hypermat.by)] = scale.maximum
+
+    } else {
+
+      hypermat.by[is.infinite(hypermat.by)] = max(hypermat.by.new, na.rm = TRUE)
+    }
     
     result$hypermat.by <- hypermat.by
     
     hypermat <- hypermat.by  
     
     title <- "-log(corrected P-value)"
+
     }
-    
+
+    # if user provides a scale.maximum lower than some values on the rrho,
+    # then replace the higher values with the user defined value
+
+    if (!is.null(scale.maximum)) {
+      hypermat[hypermat > scale.maximum] <- scale.maximum
+    }
+
+    final_hypermat <<- hypermat
+ 
+    }
+
     if (plots) { 
+
+    if (BY) {
+      title <- "-log(corrected P-value)"
+    } else {
+      title <- "-log(P-value)"
+    }
+
+    list1signchange <- (grep("^-",as.character(list1[,2])))[1]
+    list2signchange <- (grep("^-",as.character(list2[,2])))[1]
+    
+    nlist1 <- length(list1[, 1])
+    nlist2 <- length(list2[, 1])
+
     require(VennDiagram)
     require(grid)
     
@@ -201,11 +287,6 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
           axes = FALSE, main = "Rank Rank Hypergeometric Overlap Map",
           zlim = c(0,maximum))
     
-    lines(c((list1signchange/nlist1), (list1signchange/nlist1)), 
-          c(0,1),col = "white",lty = 2) 
-    lines(c(0,1), c((list2signchange/nlist2),(list2signchange/nlist2)), 
-          col = "white", lty = 2) 
-    
     mtext(labels[2], 2, 0.5)
     mtext(labels[1], 1, 0.5)
     
@@ -218,7 +299,7 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
     
     list2ind <- match(list1[, 1], list2[, 1])
     list1ind <- 1:nlist1
-    corval <- cor(list1ind, list2ind, method = "spearman")
+    corval <<- cor(list1ind, list2ind, method = "spearman")
     .filename <- paste("RankScatter", labels[1], "_VS_", 
                        labels[2], ".jpg", sep = "")
     jpeg(paste(outputdir, .filename, sep = "/"), width = 8, 
@@ -294,6 +375,7 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
     grid.draw(h2)
     grid.text("Up Regulated", y = 1)
     dev.off()
-    } 
+ 
+  }
     return(max(hypermat, na.rm = TRUE))
 }
