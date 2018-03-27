@@ -93,8 +93,7 @@ GenerateRrho <- function(pval.data, logfc.data, list,outdir,
     corval2 <- corval
 
     if(corval1 > corval2) {
-      unlink(paste(outdir,"*_2.jpg", sep = "/"))
-      unlink(paste(outdir,"*_2.csv", sep = "/"))
+        unlink(paste0(outdir, "/RRHOMap", as.character(list[j,1]), "_VS_", as.character(list[j,2]), "_2.jpg"))
 
     } else {
 
@@ -106,11 +105,14 @@ GenerateRrho <- function(pval.data, logfc.data, list,outdir,
         outputdir = outdir, 
         BY = BY, scale.maximum = scale.maximum, plotsonly = TRUE)
 
-        unlink(paste(outdir,"RankScatter*_2.jpg", sep = "/"))
-        unlink(paste(outdir,"RRHO_GO_Most*regulated*_2.csv", sep = "/"))
-        unlink(paste(outdir,"RRHO_Venn*_2.jpg", sep = "/"))
-        unlink(paste0(outdir, "/RRHOMap", as.character(list[j,1]), "_VS_", as.character(list[j,2]), ".jpg")) 
+        unlink(paste0(outdir, "/RRHOMap", as.character(list[j,1]), "_VS_", as.character(list[j,2]), ".jpg"))
+
     }
+    
+    unlink(paste0(outdir, "/RankScatter", as.character(list[j,1]), "_VS_", as.character(list[j,2]), "_2.jpg"))
+    unlink(paste0(outdir, "/RRHO_GO_MostDownregulated", as.character(list[j,1]), "_VS_", as.character(list[j,2]), "_2.csv"))
+    unlink(paste0(outdir, "/RRHO_GO_MostUpregulated", as.character(list[j,1]), "_VS_", as.character(list[j,2]), "_2.csv"))
+    unlink(paste0(outdir, "/RRHO_VennMost", as.character(list[j,1]), "_VS_", as.character(list[j,2]), "_2.jpg"))
 
     }
 
@@ -340,7 +342,7 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
     write.table(genelist.lr, .filename, row.names = F, quote = F, 
                 col.names = F)
     .filename <- paste(outputdir, "/RRHO_VennMost", labels[1], 
-                       "__VS__", labels[2], ".jpg", sep = "")
+                       "_VS_", labels[2], ".jpg", sep = "")
     jpeg(.filename, width = 8.5, height = 5, units = "in", 
          quality = 100, res = 150)
 
