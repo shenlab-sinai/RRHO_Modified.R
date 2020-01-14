@@ -245,6 +245,11 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
  
     }
 
+    list1 <- list1[order(as.numeric(list1[, 2]), decreasing = TRUE), ] ####
+    # rearrange rows acc to decreasing order of signed -log10(p-value)
+    list2 <- list2[order(as.numeric(list2[, 2]), decreasing = TRUE), ] ####
+    # rearrange rows acc to decreasing order of signed -log10(p-value)
+
     if (plots) { 
 
     if (BY) {
@@ -255,7 +260,7 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
 
     list1signchange <- (grep("^-",as.character(list1[,2])))[1]
     list2signchange <- (grep("^-",as.character(list2[,2])))[1]
-    
+
     nlist1 <- length(list1[, 1])
     nlist2 <- length(list2[, 1])
 
@@ -288,7 +293,19 @@ RrhoMod <- function (list1, list2, stepsize = DefaultStepSize(list1, list2),
     image(hypermat, xlab = "", ylab = "", col = jet.colors(100), 
           axes = FALSE, main = "Rank Rank Hypergeometric Overlap Map",
           zlim = c(0,maximum))
+
+    linepos = (list1signchange/nlist1)
+
+    if (plotsonly == TRUE) {
+    	linepos = 1 - (list1signchange/nlist1)
+    }
+
+    lines(c(linepos, linepos), 
+          c(0,1), col = "white",lty = 2) 
     
+    lines(c(0,1), c((list2signchange/nlist2),(list2signchange/nlist2)), 
+      col = "white", lty = 2) 
+
     mtext(labels[2], 2, 0.5)
     mtext(labels[1], 1, 0.5)
     
